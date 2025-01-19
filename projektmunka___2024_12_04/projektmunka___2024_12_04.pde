@@ -1,63 +1,62 @@
-int numCircles = 50; // Körök száma
-float[] circleX = new float[numCircles]; 
-float[] circleY = new float[numCircles];
-float speed = 7;
-color[] colors = new color[numCircles]; // Színek tárolása
+int numCircles = 400;
+float radiusStep = 0.9;
+float angleStep = 10;
+float sizeFactor = 0.03;
 
-int lastColorChangeTime = 0; // Az utolsó színváltás ideje
-int colorChangeInterval = 5000; // Színváltás 10 másodpercenként (10,000 millisec)
+float[] circleX = new float[numCircles];
+float[] circleY = new float[numCircles];
+float[] initialX = new float[numCircles];
+float[] initialY = new float[numCircles];
+color[] colors = new color[numCircles];
+float speed = 5;
+int lastColorChangeTime = 0;
+int colorChangeInterval = 500;
 
 void setup() {
-  size(800, 600); // Ablak mérete
-  noStroke(); // Körvonal eltávolítása
-  
-  float centerX = width / 2;
-  float centerY = height / 2;
-  float radius = 200; // Nagy kör sugara
+  size(800, 800);
+  background(0);
+  noStroke();
 
-  // Körök kezdeti pozíciója egy nagy kör mentén
   for (int i = 0; i < numCircles; i++) {
-    float angle = map(i, 0, numCircles, 0, TWO_PI);
-    circleX[i] = centerX + cos(angle) * radius;
-    circleY[i] = centerY + sin(angle) * radius;
-    colors[i] = color(random(255), random(255), random(255)); // Kezdeti színek
+    float angle = radians(i * angleStep);
+    float radius = i * radiusStep;
+    float x = cos(angle) * radius;
+    float y = sin(angle) * radius;
+
+    circleX[i] = x;
+    circleY[i] = y;
+    initialX[i] = x;
+    initialY[i] = y;
+    colors[i] = color(random(255), random(255), random(255));
   }
 }
 
 void draw() {
-  background(220); // Háttér színe
-  
-  // Ha eltelt 10 másodperc, változtassuk meg a színeket
+  background(0);
+  translate(width / 2, height / 2);
+
   if (millis() - lastColorChangeTime > colorChangeInterval) {
-    lastColorChangeTime = millis(); // Frissítjük az időpontot
+    lastColorChangeTime = millis();
     for (int i = 0; i < numCircles; i++) {
-      colors[i] = color(random(255), random(255), random(255)); // Színváltás
+      colors[i] = color(random(255), random(255), random(255));
     }
   }
-  
-  // Minden körre alkalmazzuk a mozgást és a színváltást
+
   for (int i = 0; i < numCircles; i++) {
-    float dx = circleX[i] - mouseX;
-    float dy = circleY[i] - mouseY;
-    float distance = dist(circleX[i], circleY[i], mouseX, mouseY);
-    
-    // Ha az egér közel van, a kör távolodik
-    if (distance < 200) {
-      float angle = atan2(dy, dx); // Szög az egértől
-      float newX = circleX[i] + cos(angle) * speed; // Új x pozíció
-      float newY = circleY[i] + sin(angle) * speed; // Új y pozíció
-      
-      // Határellenőrzés, hogy a kör ne menjen ki az ablakból
-      if (newX > 5 && newX < width - 5) {
-        circleX[i] = newX;
-      }
-      if (newY > 5 && newY < height - 5) {
-        circleY[i] = newY;
-      }
+    float dx = circleX[i] - (mouseX - width / 2);
+    float dy = circleY[i] - (mouseY - height / 2);
+    float distance = dist(circleX[i], circleY[i], mouseX - width / 2, mouseY - height / 2);
+
+    if (distance < 100) {
+      float angle = atan2(dy, dx);
+      circleX[i] += cos(angle) * speed;
+      circleY[i] += sin(angle) * speed;
+    } else {
+      circleX[i] = lerp(circleX[i], initialX[i], 0.05);
+      circleY[i] = lerp(circleY[i], initialY[i], 0.05);
     }
-    
-    // Kör kirajzolása
+
     fill(colors[i]);
-    ellipse(circleX[i], circleY[i], 10, 10); // Kis kör átmérője
+    ellipse(circleX[i], circleY[i], i * sizeFactor, i * sizeFactor);
   }
 }
